@@ -1,0 +1,3 @@
+Transmission Control Protocol(TCP)
+
+Before computers start communicating and sending data to each other, TCP does a handshake. Its like how u call someone and greet them then they greet you back and then u start a call. Your PC sends a SYN, the other computer replies with a SYN-ACK and then your PC sends an ACK. This means that both computers are connected. A port is open when a program is listening and it completes this protocol. It is closed when no program is listening, so the connection gets rejected. A port is filtered when a firewall ignores the connection and so there is no reply and the scanner has to wait for the timeout.
