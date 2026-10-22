@@ -1,5 +1,6 @@
 import socket
 import sys
+import time
 
 
 def scan_port(host, port, timeout=0.5):
@@ -15,12 +16,14 @@ def main():
 
     host = sys.argv[1]
     print(f"Scanning {host}...")
+    start = time.time()
 
     for port in range(1, 1025):
         if scan_port(host, port):
             print(f"Port {port} is open")
 
-    print("Done.")
+    elapsed = time.time() - start
+    print(f"Done. Scan took {elapsed:.1f} seconds.")
 
 
 if __name__ == "__main__":
