@@ -13,3 +13,5 @@ TCP is what I used for this project, first it does the handshake protocol and th
 Baseline
 
 Using py scanner.py 127.0.0.1 took 516.7 seconds. Which makes sense because 1024 ports and since I set the wait time to 0.5 seconds for each port its about 512 seconds, and two ports (Port 135 and Port 445) were already open and would have answered instantly it would be 511 seconds which is close to 516.7 seconds.
+
+Using threading, py scanner.py 127.0.0.1 took 5.6 seconds which is about 92 times faster. This is because threading is a different way of checking ports. Instead of asking each port it does x number of ports at once. A thread is like a "worker" that asks each port. The new test checked 100 ports at once, but one can even check 10 or 500 as well. It's better not to go above 500 since some ports might get skipped. Using threading with 500 ports took 1.6 seconds!

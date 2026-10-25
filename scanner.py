@@ -1,6 +1,7 @@
 import argparse
 import socket
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 
 def scan_port(host, port, timeout=0.5):
@@ -32,6 +33,10 @@ def main():
         "-t", "--timeout", type=float, default=0.5,
         help="seconds to wait per port (default: 0.5)",
     )
+    parser.add_argument(
+        "-w", "--workers", type=int, default=100,
+        help="how many ports to check at the same time (default: 100)",
+    )
     args = parser.parse_args()
 
     try:
@@ -42,12 +47,24 @@ def main():
     if any(p < 1 or p > 65535 for p in ports):
         parser.error("ports must be between 1 and 65535")
 
-    print(f"Scanning {args.host} ({len(ports)} ports)...")
+    if args.workers < 1:
+        parser.error("workers must be at least 1")
+
+    try:
+        socket.gethostbyname(args.host)
+    except socket.gaierror:
+        parser.error(f"could not find host '{args.host}'")
+
+    print(f"Scanning {args.host} ({len(ports)} ports, {args.workers} at a time)...")
     start = time.time()
 
-    for port in ports:
-        if scan_port(args.host, port, args.timeout):
-            print(f"Port {port} is open")
+    with ThreadPoolExecutor(max_workers=args.workers) as executor:
+        results = executor.map(
+            lambda port: scan_port(args.host, port, args.timeout), ports
+        )
+        for port, is_open in zip(ports, results):
+            if is_open:
+                print(f"Port {port} is open")
 
     elapsed = time.time() - start
     print(f"Done. Scan took {elapsed:.1f} seconds.")
