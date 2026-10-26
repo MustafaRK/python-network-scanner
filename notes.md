@@ -15,3 +15,7 @@ Baseline
 Using py scanner.py 127.0.0.1 took 516.7 seconds. Which makes sense because 1024 ports and since I set the wait time to 0.5 seconds for each port its about 512 seconds, and two ports (Port 135 and Port 445) were already open and would have answered instantly it would be 511 seconds which is close to 516.7 seconds.
 
 Using threading, py scanner.py 127.0.0.1 took 5.6 seconds which is about 92 times faster. This is because threading is a different way of checking ports. Instead of asking each port it does x number of ports at once. A thread is like a "worker" that asks each port. The new test checked 100 ports at once, but one can even check 10 or 500 as well. It's better not to go above 500 since some ports might get skipped. Using threading with 500 ports took 1.6 seconds!
+
+Service Names
+
+My scanner uses service names, which are the names given to the ports to identify them. For example Port 135 shows up as epmap. Using service names creates a way to look up ports just by their number. However, someone could possibly run something on for example port 8000 and the scanner would call it "unknown" or it could call it something that has nothing to do with it. The names come from a list of standard port assignments from my PC.

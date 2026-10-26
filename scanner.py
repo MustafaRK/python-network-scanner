@@ -10,6 +10,14 @@ def scan_port(host, port, timeout=0.5):
         return s.connect_ex((host, port)) == 0
 
 
+def get_service_name(port):
+    """Look up the standard service name for a port, or 'unknown'."""
+    try:
+        return socket.getservbyport(port, "tcp")
+    except OSError:
+        return "unknown"
+
+
 def parse_ports(port_string):
     """Turn text like '80', '1-1024' or '22,80,443' into a list of ports."""
     ports = []
@@ -50,6 +58,9 @@ def main():
     if args.workers < 1:
         parser.error("workers must be at least 1")
 
+    if args.timeout <= 0:
+        parser.error("timeout must be greater than 0")
+
     try:
         socket.gethostbyname(args.host)
     except socket.gaierror:
@@ -57,6 +68,7 @@ def main():
 
     print(f"Scanning {args.host} ({len(ports)} ports, {args.workers} at a time)...")
     start = time.time()
+    open_count = 0
 
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
         results = executor.map(
@@ -64,10 +76,11 @@ def main():
         )
         for port, is_open in zip(ports, results):
             if is_open:
-                print(f"Port {port} is open")
+                open_count += 1
+                print(f"Port {port} is open ({get_service_name(port)})")
 
     elapsed = time.time() - start
-    print(f"Done. Scan took {elapsed:.1f} seconds.")
+    print(f"Done. Found {open_count} open ports in {elapsed:.1f} seconds.")
 
 
 if __name__ == "__main__":

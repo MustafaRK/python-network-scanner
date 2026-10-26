@@ -6,3 +6,9 @@ Usage: py scanner.py <host> [-p PORTS] [-t TIMEOUT]
 -t: Timeout, the time user wants scanner to wait for each ports reply in seconds.
 -w: number of workers (threads) checking ports at one time
 Example: py scanner.py 127.0.0.1 -p 130-140 -t 0.5 -w 500
+
+Service Names: Names given to identify the ports. For example py scanner.py 127.0.0.1 gives the output:
+Scanning 127.0.0.1 (1024 ports, 100 at a time)...
+Port 135 is open (epmap)
+Port 445 is open (microsoft-ds)
+Done. Found 2 open ports in 5.6 seconds.
