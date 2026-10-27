@@ -19,3 +19,7 @@ Using threading, py scanner.py 127.0.0.1 took 5.6 seconds which is about 92 time
 Service Names
 
 My scanner uses service names, which are the names given to the ports to identify them. For example Port 135 shows up as epmap. Using service names creates a way to look up ports just by their number. However, someone could possibly run something on for example port 8000 and the scanner would call it "unknown" or it could call it something that has nothing to do with it. The names come from a list of standard port assignments from my PC.
+
+IP Range Scanning
+
+The /24 at the end of the IP address means the first three numbers of the IP stay the same and the last number changes. So when scanning, the last number changes from 1-254. The scanner keeps on looping until all addresses are checked. My scanner uses a range scan which is why it only took 11.1 seconds, that means it only used a short list of 14 common ports. Otherwise it would've taken (254 addresses * 1024 ports) which is about 260,000 checks. If a device doesn't appear it does not mean the device is offline. My scanner only checks for ports on the list. Out of 254 addresses, only 3 had open ports, with 12 open ports in total. The scanner checked 14 ports on each address. One of the devices being my PC, another being my router and an unknown third device.
