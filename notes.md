@@ -23,3 +23,12 @@ My scanner uses service names, which are the names given to the ports to identif
 IP Range Scanning
 
 The /24 at the end of the IP address means the first three numbers of the IP stay the same and the last number changes. So when scanning, the last number changes from 1-254. The scanner keeps on looping until all addresses are checked. My scanner uses a range scan which is why it only took 11.1 seconds, that means it only used a short list of 14 common ports. Otherwise it would've taken (254 addresses * 1024 ports) which is about 260,000 checks. If a device doesn't appear it does not mean the device is offline. My scanner only checks for ports on the list. Out of 254 addresses, only 3 had open ports, with 12 open ports in total. The scanner checked 14 ports on each address. One of the devices being my PC, another being my router and an unknown third device.
+
+Banner
+
+A banner is a short message that a port will send about itself when you try connecting. My scanner has the banner option off by default because it is slower, to enable it you have to use the -b option. Banners fix the service name issue since the banner comes from a service itself and is not a guess. Some ports remain silent and show no banner for example Port 443 remains silent because the connection is encrypted. 
+Example:
+py scanner.py 127.0.0.1 -p 8000 -b
+Scanning 1 host(s), 1 port(s) each, 100 at a time...
+127.0.0.1:8000 is open (unknown) - Server: SimpleHTTP/0.6 Python/3.13.5
+Done. Found 1 open ports on 1 host(s) in 0.0 seconds.

@@ -5,6 +5,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 COMMON_PORTS = "21,22,23,25,53,80,110,135,139,143,443,445,3389,8080"
+HTTP_PORTS = {80, 8000, 8080, 8888}
 
 
 def scan_port(host, port, timeout=0.5):
@@ -19,6 +20,28 @@ def get_service_name(port):
         return socket.getservbyport(port, "tcp")
     except OSError:
         return "unknown"
+
+
+def grab_banner(host, port, timeout=2):
+    """Connect to an open port and read what the service says about itself."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(timeout)
+            s.connect((host, port))
+            if port in HTTP_PORTS:
+                s.sendall(b"HEAD / HTTP/1.0\r\n\r\n")
+            data = s.recv(1024)
+    except OSError:
+        return ""
+
+    text = data.decode("utf-8", errors="replace")
+    text = "".join(c for c in text if c.isprintable() or c in "\r\n")
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+
+    for line in lines:
+        if line.lower().startswith("server:"):
+            return line[:80]
+    return lines[0][:80] if lines else ""
 
 
 def parse_ports(port_string):
@@ -69,6 +92,10 @@ def main():
         "-w", "--workers", type=int, default=100,
         help="how many ports to check at the same time (default: 100)",
     )
+    parser.add_argument(
+        "-b", "--banners", action="store_true",
+        help="try to read a banner from each open port (slower)",
+    )
     args = parser.parse_args()
 
     try:
@@ -111,7 +138,12 @@ def main():
             if is_open:
                 open_count += 1
                 hosts_with_open_ports.add(host)
-                print(f"{host}:{port} is open ({get_service_name(port)})")
+                line = f"{host}:{port} is open ({get_service_name(port)})"
+                if args.banners:
+                    banner = grab_banner(host, port)
+                    if banner:
+                        line += f" - {banner}"
+                print(line)
 
     elapsed = time.time() - start
     print(
