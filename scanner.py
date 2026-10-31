@@ -1,5 +1,7 @@
 import argparse
+import csv
 import ipaddress
+import json
 import socket
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -74,6 +76,25 @@ def get_hosts(target):
     return [str(ip) for ip in network.hosts()]
 
 
+def save_results(path, target, results, elapsed):
+    """Write the open ports to a .json or .csv file."""
+    if path.lower().endswith(".json"):
+        data = {
+            "target": target,
+            "scan_seconds": round(elapsed, 1),
+            "open_ports": results,
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    else:
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(
+                f, fieldnames=["host", "port", "service", "banner"]
+            )
+            writer.writeheader()
+            writer.writerows(results)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Simple TCP port scanner")
     parser.add_argument(
@@ -96,7 +117,14 @@ def main():
         "-b", "--banners", action="store_true",
         help="try to read a banner from each open port (slower)",
     )
+    parser.add_argument(
+        "-o", "--output",
+        help="save results to a file ending in .json or .csv",
+    )
     args = parser.parse_args()
+
+    if args.output and not args.output.lower().endswith((".json", ".csv")):
+        parser.error("output file must end in .json or .csv")
 
     try:
         hosts = get_hosts(args.target)
@@ -125,7 +153,7 @@ def main():
         f"{args.workers} at a time..."
     )
     start = time.time()
-    open_count = 0
+    found = []
     hosts_with_open_ports = set()
 
     tasks = [(host, port) for host in hosts for port in ports]
@@ -136,20 +164,29 @@ def main():
         )
         for (host, port), is_open in zip(tasks, results):
             if is_open:
-                open_count += 1
                 hosts_with_open_ports.add(host)
-                line = f"{host}:{port} is open ({get_service_name(port)})"
-                if args.banners:
-                    banner = grab_banner(host, port)
-                    if banner:
-                        line += f" - {banner}"
+                service = get_service_name(port)
+                banner = grab_banner(host, port) if args.banners else ""
+                line = f"{host}:{port} is open ({service})"
+                if banner:
+                    line += f" - {banner}"
                 print(line)
+                found.append(
+                    {"host": host, "port": port, "service": service, "banner": banner}
+                )
 
     elapsed = time.time() - start
     print(
-        f"Done. Found {open_count} open ports on {len(hosts_with_open_ports)} "
+        f"Done. Found {len(found)} open ports on {len(hosts_with_open_ports)} "
         f"host(s) in {elapsed:.1f} seconds."
     )
+
+    if args.output:
+        try:
+            save_results(args.output, args.target, found, elapsed)
+            print(f"Results saved to {args.output}")
+        except OSError as error:
+            print(f"Could not save results: {error}")
 
 
 if __name__ == "__main__":

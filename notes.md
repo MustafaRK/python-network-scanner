@@ -32,3 +32,24 @@ py scanner.py 127.0.0.1 -p 8000 -b
 Scanning 1 host(s), 1 port(s) each, 100 at a time...
 127.0.0.1:8000 is open (unknown) - Server: SimpleHTTP/0.6 Python/3.13.5
 Done. Found 1 open ports on 1 host(s) in 0.0 seconds.
+
+JSON and CSV
+
+I added a  file saving system to my scanner, so  every time it runs with  the -o function it would save as a json or csv file according to the users directions. JSON is a structured text that programs can read easily. For example 
+{
+  "target": "127.0.0.1",
+  "scan_seconds": 0.5,
+  "open_ports": [
+    {
+      "host": "127.0.0.1",
+      "port": 135,
+      "service": "epmap",
+      "banner": ""
+    }
+  ]
+}
+
+CSV is a plain table that can open in excel or google sheets. For example
+host,port,service,banner
+127.0.0.1,135,epmap,
+It is useful to save the results so you can compare scans or open them with third party applications such as excel. I added .gitignore so the scanned files would not be publicly available.
