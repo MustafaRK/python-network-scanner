@@ -53,3 +53,16 @@ CSV is a plain table that can open in excel or google sheets. For example
 host,port,service,banner
 127.0.0.1,135,epmap,
 It is useful to save the results so you can compare scans or open them with third party applications such as excel. I added .gitignore so the scanned files would not be publicly available.
+
+Progress Counter
+
+I added a progress counter (e.g. Progress: 100/1024) so the user can have a rough idea of how slow or fast the scan is going. Additionally longer scans can often look "frozen" so the progress counter helps the user see if the scan stopped or is still going.
+
+Ctrl+C
+
+Pressing Ctrl+C leads to a clean stop to a scan. (e.g. Scan cancelled. Showing what was found so far.
+Stopped early. Found 12 open ports on 1 host(s) in 70.3 seconds.). The scan still saves the results found until pressed. Without it python would add an error.
+
+Input Checks
+
+Added input checks that will remind the user to use correct syntax in case they made an error or typo.

@@ -3,6 +3,7 @@ import csv
 import ipaddress
 import json
 import socket
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 
@@ -11,9 +12,12 @@ HTTP_PORTS = {80, 8000, 8080, 8888}
 
 
 def scan_port(host, port, timeout=0.5):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.settimeout(timeout)
-        return s.connect_ex((host, port)) == 0
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(timeout)
+            return s.connect_ex((host, port)) == 0
+    except OSError:
+        return False
 
 
 def get_service_name(port):
@@ -47,7 +51,7 @@ def grab_banner(host, port, timeout=2):
 
 
 def parse_ports(port_string):
-    """Turn text like '80', '1-1024' or '22,80,443' into a list of ports."""
+    """Turn text like '80', '1-1024' or '22,80,443' into a sorted list of ports."""
     ports = []
     for part in port_string.split(","):
         if "-" in part:
@@ -55,7 +59,7 @@ def parse_ports(port_string):
             ports.extend(range(int(start), int(end) + 1))
         else:
             ports.append(int(part))
-    return ports
+    return sorted(set(ports))
 
 
 def get_hosts(target):
@@ -93,6 +97,11 @@ def save_results(path, target, results, elapsed):
             )
             writer.writeheader()
             writer.writerows(results)
+
+
+def clear_progress():
+    """Erase the progress line so other text can be printed cleanly."""
+    print("\r" + " " * 40 + "\r", end="", flush=True)
 
 
 def main():
@@ -139,6 +148,9 @@ def main():
     except ValueError:
         parser.error("ports must be numbers like 80, 1-1024 or 22,80,443")
 
+    if not ports:
+        parser.error("no ports to scan (ranges must go from low to high, like 1-100)")
+
     if any(p < 1 or p > 65535 for p in ports):
         parser.error("ports must be between 1 and 65535")
 
@@ -148,6 +160,10 @@ def main():
     if args.timeout <= 0:
         parser.error("timeout must be greater than 0")
 
+    if args.workers > 500:
+        print("Warning: more than 500 workers can make Windows drop connections,")
+        print("so some open ports might be missed.")
+
     print(
         f"Scanning {len(hosts)} host(s), {len(ports)} port(s) each, "
         f"{args.workers} at a time..."
@@ -155,15 +171,23 @@ def main():
     start = time.time()
     found = []
     hosts_with_open_ports = set()
+    cancelled = False
 
     tasks = [(host, port) for host in hosts for port in ports]
+    total = len(tasks)
+    show_progress = sys.stdout.isatty() and total > 50
 
-    with ThreadPoolExecutor(max_workers=args.workers) as executor:
+    executor = ThreadPoolExecutor(max_workers=args.workers)
+    try:
         results = executor.map(
             lambda task: scan_port(task[0], task[1], args.timeout), tasks
         )
-        for (host, port), is_open in zip(tasks, results):
+        for done, ((host, port), is_open) in enumerate(zip(tasks, results), start=1):
+            if show_progress and (done % 10 == 0 or done == total):
+                print(f"\rProgress: {done}/{total}", end="", flush=True)
             if is_open:
+                if show_progress:
+                    clear_progress()
                 hosts_with_open_ports.add(host)
                 service = get_service_name(port)
                 banner = grab_banner(host, port) if args.banners else ""
@@ -174,10 +198,20 @@ def main():
                 found.append(
                     {"host": host, "port": port, "service": service, "banner": banner}
                 )
+        if show_progress:
+            clear_progress()
+    except KeyboardInterrupt:
+        cancelled = True
+        if show_progress:
+            clear_progress()
+        print("Scan cancelled. Showing what was found so far.")
+    finally:
+        executor.shutdown(wait=False, cancel_futures=True)
 
     elapsed = time.time() - start
+    status = "Stopped early" if cancelled else "Done"
     print(
-        f"Done. Found {len(found)} open ports on {len(hosts_with_open_ports)} "
+        f"{status}. Found {len(found)} open ports on {len(hosts_with_open_ports)} "
         f"host(s) in {elapsed:.1f} seconds."
     )
 

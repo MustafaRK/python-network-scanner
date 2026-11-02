@@ -76,3 +76,13 @@ Port 135 is open (epmap)
 Port 445 is open (microsoft-ds)
 
 Done. Found 2 open ports in 5.6 seconds.
+
+Features:
+
+Progress Counter: Displays the progress of a scan to help the user estimate the time it will take and to satisfy them that their scan is 
+
+still going on and it did not stop.
+
+Ctrl+C: Pressing this stops the scan in a clean way incase the user wants to stop it.
+
+Input Checks: Identifies errors in the input and notifies the user in case they made a typo or a mistake.
