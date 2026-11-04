@@ -66,3 +66,7 @@ Stopped early. Found 12 open ports on 1 host(s) in 70.3 seconds.). The scan stil
 Input Checks
 
 Added input checks that will remind the user to use correct syntax in case they made an error or typo.
+
+Code Cleanup
+
+I refactored my code for my scanner. That just means i maded it more legible and easier to understand from an outsiders persperctive without actually changing any of the logic or what it actually does.

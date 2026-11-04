@@ -86,3 +86,16 @@ still going on and it did not stop.
 Ctrl+C: Pressing this stops the scan in a clean way incase the user wants to stop it.
 
 Input Checks: Identifies errors in the input and notifies the user in case they made a typo or a mistake.
+
+
+How it Works
+
+scan_port : tries a TCP connection to one port and tells the user wether its open or not
+
+get_hosts and parse_ports : turn what the user types into a list of hosts and ports
+
+run_scan : checks the host/port pairs using threads
+
+grab_banner and get_service_name : Add the details part for each port
+
+save_results : Saves the results to JSON or CSV
